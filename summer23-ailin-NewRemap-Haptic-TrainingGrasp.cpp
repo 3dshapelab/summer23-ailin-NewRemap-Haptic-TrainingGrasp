@@ -1,5 +1,5 @@
 // this script aims to use probe adjustment task to measure the gain/strength of either texture or disparity as a depth cue
-#include "summer22-ailin-hapticRemap-Grasping.h"
+#include "summer23-ailin-NewRemap-Haptic-TrainingGrasp.h"
 
 void initPreviewStimulus(double textDepth, double dispDepth) {
 
@@ -604,19 +604,19 @@ float adjustAmbient(double textDepth, float maxInt, double rateAmbvsDiff_flat, d
 
 void initBlock()
 {
+	trial.init(parameters);
 	// initialize the trial matrix
 	if(session_full_vs_extra){
-		trial.init(parameters);
+
 		repetition = 3;
 		totalTrNum = 6 * 8 * repetition;
 
 	}else{
-		trial.init(parameters_extra);
+
 		repetition = 4;
 		totalTrNum = 12 * repetition;
 	}
 	trial.next();
-	//trial.next(false);
 
 	trialNum = 1;
 	
@@ -625,22 +625,32 @@ void initBlock()
 // Initialize the streams, open the file and write to it
 void initStreams()
 {
-	// Initialize the parameter file starting from the file parameters.txt, if the file does not exist, it tells you
-	
-	//parametersFileName = experiment_directory + "/parameters_summer22-ailin-hapticRemap-matching-staircase.txt";
-	
-	parametersFile.open(parametersFileName.c_str());
-	parameters.loadParameterFile(parametersFile);
+	ifstream parametersFile_subj;
+
+	parametersFile_subj.open(parametersFileName_subj.c_str());
+	parameters_subj.loadParameterFile(parametersFile_subj);
+	subjectName = parameters_subj.find("SubjectName");
+	interoculardistance = str2num<double>(parameters_subj.find("IOD"));
+	display_distance = str2num<double>(parameters_subj.find("dispDepth"));
 
 
-	// Subject name
-	subjectName = parameters.find("SubjectName");
-	string responseFileName = experiment_directory +"/"+ subjectName  + "_s1_G.txt";
+	string session = parameters_subj.find("TRAINING_Session");
+	sessionNum = str2num<int>(session);
 
-	interoculardistance = atof(parameters.find("IOD").c_str());
-	display_distance = str2num<double>(parameters.find("dispDepth"));
+	string dirName = experiment_directory + subjectName;
+	mkdir(dirName.c_str()); // windows syntax
 
-	int targetCueID = str2num<int>(parameters.find("targetCue"));
+
+	// Principal streams files
+	if (util::fileExists(dirName + "/" + subjectName + "_s" + session + "_Grasp.txt") && subjectName != "junk")
+	{
+		string error_on_file_io = string("file already exists");
+		cerr << error_on_file_io << endl;
+		MessageBox(NULL, (LPCSTR)"FILE ALREADY EXISTS\n Please check the parameters file.", NULL, NULL);
+		shutdown();
+	}
+
+	int targetCueID = str2num<int>(parameters_subj.find("TRAINING_Cue"));
 	if(targetCueID > 0){
 		reinforce_texture_disparity = false;
 	}else{
@@ -648,33 +658,32 @@ void initStreams()
 	}
 
 
-	sessionNum = str2num<int>(parameters.find("Session"));
 
-	if(sessionNum == 1){
-		session_full_vs_extra = true;
 
-		// Principal streams files
-		if (util::fileExists(experiment_directory +"/"+subjectName +"_s1_G.txt") && subjectName != "junk")
-		{
-			string error_on_file_io = experiment_directory+"/"+subjectName +"_s1_G.txt" + string(" already exists");
+	if(sessionNum > 0){
+
+		if (util::fileExists(experiment_directory + "/" + subjectName + "_s0_Grasp.txt") && subjectName != "junk") {
+			session_full_vs_extra = true;
+			ifstream parametersFile;
+			parametersFile.open(parametersFileName.c_str());
+			parameters.loadParameterFile(parametersFile);
+		}
+		else {
+			string error_on_file_io = string("skipped s0. plese complete s0 before the s1");
 			cerr << error_on_file_io << endl;
-			MessageBox(NULL, (LPCSTR)"FILE ALREADY EXISTS\n Please check the parameters file.",NULL, NULL);
+			MessageBox(NULL, (LPCSTR)"s0 is REQUIRED before s1\n Please check the subject's parameters file.", NULL, NULL);
 			shutdown();
 		}
+ 
 	}else{
 		session_full_vs_extra = false;
-		responseFileName = experiment_directory +"/"+ subjectName  +"_s0_extra_G.txt";
-		// Principal streams files
-		if (util::fileExists(experiment_directory +"/"+subjectName +"_s0_extra_G.txt") && subjectName != "junk")
-		{
-			string error_on_file_io = experiment_directory+"/"+subjectName+".txt" + string(" already exists");
-			cerr << error_on_file_io << endl;
-			MessageBox(NULL, (LPCSTR)"FILE ALREADY EXISTS\n Please check the parameters file.",NULL, NULL);
-			shutdown();
-		}
-		parametersFile_extra.open(parametersFileName_extra.c_str());
-		parameters_extra.loadParameterFile(parametersFile_extra);
+		ifstream parametersFile;
+		parametersFile.open(parametersFileName_prep.c_str());
+		parameters.loadParameterFile(parametersFile);
+
 	}
+
+	string responseFileName = dirName + "/" + subjectName + "_s" + session + "_Grasp.txt";
 	responseFile.open(responseFileName.c_str());
 	responseFile << fixed << responseFile_headers << endl;
 	

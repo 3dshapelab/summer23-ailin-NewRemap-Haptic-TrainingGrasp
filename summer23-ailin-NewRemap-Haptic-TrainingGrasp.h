@@ -24,7 +24,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include "CShaderProgram.h" // shader program
-//#include "glext.h" // opengl extensions for multisampling
+#include "glext.h" // opengl extensions for multisampling
 #include <gl\gl.h>            // Header File For The OpenGL32 Library
 #include <gl\glu.h>            // Header File For The GLu32 Library
 #include "glut.h"            // Header File For The GLu32 Library
@@ -137,21 +137,23 @@ bool attemped_MSE = false;
 
 
 /********** TRIAL SPECIFIC PARAMETERS ***************/
-ParametersLoader parameters;
-ParametersLoader parameters_extra;
+
 BalanceFactor<double> trial; //if using costant stimuli
-//TrialGenerator<double> trial;//if using staircase: 
 
-
-/*************************** INPUT AND OUTPUT ****************************/
 // experiment directory
-string experiment_directory = "C:/Users/labdomin/Documents/data/ailin/summer22-ailin-hapticRemap-Grasping";
+string experiment_directory = "C:/Users/labdomin/Documents/data/ailin/summer23-ailin-NewRemap-Haptic/";
 
 // paramters file directory and name
-ifstream parametersFile;
-string parametersFileName = experiment_directory + "/parameters_summer22-ailin-hapticRemap-Grasping.txt";
-ifstream parametersFile_extra;
-string parametersFileName_extra = experiment_directory + "/parameters_summer22-ailin-hapticRemap-Grasping-extra.txt";
+ParametersLoader parameters_subj;
+ParametersLoader parameters;
+
+// paramters file directory and name
+
+string parametersFileName_subj = experiment_directory + "ParametersFiles/Haptic_Subj.txt";
+
+string parametersFileName = experiment_directory + "ParametersFiles/parameters_Haptic_Grasping.txt";
+string parametersFileName_prep = experiment_directory + "ParametersFiles/parameters_Haptic_Grasping_prep.txt";
+
 
 // response file
 ofstream responseFile;
