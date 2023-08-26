@@ -204,6 +204,7 @@ int repetition = 3;
 int totalTrNum = 4 * 6 * repetition;
 int trialNum = 0;
 double percentComplete = 0;
+int trialNum_break = 20;
 int trainNum_cap = 20;
 
 
