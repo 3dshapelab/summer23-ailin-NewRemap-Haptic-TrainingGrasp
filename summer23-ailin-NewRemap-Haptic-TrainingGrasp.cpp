@@ -15,6 +15,7 @@ double getTg(double shapeHeight, double shapeDepth, double Y) {
 	return (-shapeDepth * sin(M_PI * Y / shapeHeight) * M_PI / shapeHeight);
 }
 
+/*
 float adjustDiffLight(double textDepth, float maxInt, float ambInt, double Depth_flat, double Depth_deep) {
 	float newDiff = ambInt;
 
@@ -24,6 +25,16 @@ float adjustDiffLight(double textDepth, float maxInt, float ambInt, double Depth
 		newDiff = newDiff + (textDepth - Depth_flat) / (Depth_deep - textDepth) * (maxInt - 2 * ambInt);
 
 	return newDiff;
+}
+*/
+
+
+float adjustAmbient(double textDepth, float maxInt, double rateAmbvsDiff_flat, double rateAmbvsDiff_deep, double Depth_flat, double Depth_deep) {
+
+	double rateAmbvsDiff_new = rateAmbvsDiff_flat + (rateAmbvsDiff_deep - rateAmbvsDiff_flat) * (textDepth - Depth_flat) / (Depth_deep - Depth_flat);
+	float newAmbient = maxInt * (rateAmbvsDiff_new / (rateAmbvsDiff_new + 1));
+
+	return newAmbient;
 }
 
 double NewtonSolver_fz(double z, double Depth, double zCoeff, double distShapeToEye) {
@@ -584,9 +595,12 @@ void initStimulus(double dispDepth, double textDepth) {
 	dist_toEye = -(display_distance_jittered - dispDepth);
 
 	stimulus_built = buildTextureSurface(stimulus_width, stimulus_height, dispDepth, textDepth, dist_toEye, stimulus_visiblewidth, my_verts, my_contour_data);
-	
-	light_dif = adjustDiffLight(textDepth, max_intensity, light_amb, light_depthMin, light_depthMax);
 	dot_number = ratio_visiblewidth_height / ratio_width_height * dot_number;
+
+	max_intensity = min_intensity + (1.0 - min_intensity) * (depth_text - light_depthMin) / (light_depthMax - light_depthMin);
+	light_amb = adjustAmbient(depth_text, max_intensity, 1.0, 0.4, light_depthMin, light_depthMax);
+	light_dif = max_intensity - light_amb;
+	
 }
 
 
@@ -746,6 +760,7 @@ bool initHaptic_velmex() {
 	}
 	else {
 		visualTarget_Y = centeredObjEdge.y() + obj_y_offset;
+		thmTarget.y() = visualTarget_Y;
 		return true;
 	}
 
@@ -1017,9 +1032,9 @@ void initStreams()
 	}
 
 
-	if(sessionNum > 0){
+	if(sessionNum > 1){
 		// only proceed to main training after init prep training is completed
-		if (util::fileExists(experiment_directory + "/" + subjectName + "_s0_Grasp.txt") && subjectName != "junk") {
+		if (util::fileExists(dirName + "/" + subjectName + "_s1_Grasp.txt") && subjectName != "junk") {
 
 			auto t = std::time(nullptr);
 			auto tm = *std::localtime(&t);
@@ -1036,9 +1051,9 @@ void initStreams()
 			visual_angle = str2num<double>(parameters.find("visualAng"));
 		}
 		else {
-			string error_on_file_io = string("skipped s0. plese complete s0 before the s1");
+			string error_on_file_io = string("skipped s1. plese complete s1 before the s2");
 			cerr << error_on_file_io << endl;
-			MessageBox(NULL, (LPCSTR)"s0 is REQUIRED before s1\n Please check the subject's parameters file.", NULL, NULL);
+			MessageBox(NULL, (LPCSTR)"s1 is REQUIRED before s2\n Please check the subject's parameters file.", NULL, NULL);
 			shutdown();
 		}
  
@@ -1132,6 +1147,7 @@ void drawInfo_alignment(GLText curText) {
 	curText.draw(" ");
 	curText.draw(" ");
 	curText.draw(" ");
+	glColor3fv(glRed);
 	curText.draw("Mirror1 Marker " + stringify< Eigen::Matrix<double, 1, 3> >(markers[mirror1].p.transpose()));
 	curText.draw("Mirror2 Marker " + stringify< Eigen::Matrix<double, 1, 3> >(markers[mirror2].p.transpose()));
 	if (abs(mirrorAlignment - 45.0) < 0.2)
@@ -1623,6 +1639,7 @@ void initTrial()
 	}
 	else {
 		depth_mean = trial.getCurrent()["meanDepth"] + (rand() % 3 - 1.0);
+
 		if(session_full_vs_extra){
 			depth_delta = trial.getCurrent()["DepthDelta"];
 		
@@ -1751,7 +1768,7 @@ void advanceTrial()
 		(int)reinforce_texture_disparity << "\t" <<
 		(int)session_full_vs_extra << "\t" <<
 		interoculardistance << "\t" <<
-		blkNum << "\t" <<
+		sessionNum << "\t" <<
 		trialNum << "\t" <<
 		display_distance << "\t" <<
 		visualTarget_X << "\t" <<
@@ -2454,13 +2471,21 @@ void draw_thumb_dots()
 	// Index dot
 	if(allVisibleThumb){
 		if(!handOnObject){
-			glColor3f(1.0f,0.0f,0.0f);
+				
+			//glColor3f(1.0f,0.0f,0.0f);
 			// Thumb dot
 			glPushMatrix();
 			glLoadIdentity();
 			glTranslated(thm.x(), thm.y(), thm.z());
-			glutSolidSphere(2, 10, 10);
-			//glutWireSphere(3, 8, 8);
+			if (training) {
+				glColor3f(1.0f, 0.0f, 0.0f);
+				glutSolidSphere(3, 10, 10);
+			}
+			else {
+				glColor3f(1.0f, 0.0f, 0.0f);
+				glutSolidSphere(2, 10, 10);
+			}
+			
 
 			glPopMatrix();
 		}
@@ -2469,7 +2494,7 @@ void draw_thumb_dots()
 		glPushMatrix();
 		glLoadIdentity();
 		glTranslated(thmTarget[0] - stimulus_width, thmTarget[1] - 10, thmTarget[2] + 5);
-		//glutSolidSphere(.8, 10, 10);
+
 
 		double T_length = 4;
 		glBegin(GL_LINES);

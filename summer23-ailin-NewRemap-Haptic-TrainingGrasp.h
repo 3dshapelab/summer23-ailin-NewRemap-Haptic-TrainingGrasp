@@ -186,7 +186,7 @@ string parametersFileName_prep = experiment_directory + "ParametersFiles/paramet
 
 // response file
 ofstream responseFile;
-string responseFile_headers = "subjName\treinforceTexture\tmainTraining\tIOD\tblockN\ttrialN\tdisplayDistance\ttarget_X\tDepthMean\tDepthDelta\tDepth_disp\tDepth_text\tDepth_haptic\tmvID\tMSE1\tRT_MSE1\tRT_G\tnum_texDots\tradius_texDots\tLAcorrection\tcalibNum";
+string responseFile_headers = "subjName\treinforceTexture\tmainTraining\tIOD\tsessionN\ttrialN\tdisplayDistance\ttarget_X\tDepthMean\tDepthDelta\tDepth_disp\tDepth_text\tDepth_haptic\tmvID\tMSE1\tRT_MSE1\tRT_G\tnum_texDots\tradius_texDots\tLAcorrection\tcalibNum";
 
 
 /********** TRIAL SPECIFIC PARAMETERS ***************/
@@ -324,6 +324,7 @@ double R_intersect_factor = 2 / (1 + drop_off_rate);
 
 /********** LIGHT SHADING ***************/
 float max_intensity = 1.0;
+float min_intensity = 0.75;
 float light_amb = 0.3;
 float light_dif = 0.5;
 float lightDir_z = 0.5;
@@ -421,7 +422,8 @@ double SolveForZ_projected(double theHeight, double newDepth, double l, double y
 void scanCurve(double shapeHeight, double shapeDepth, CurveYLMap& output_curve_ylmap);
 void projectCurve(const CurveYLMap& curve_map_proj, double distShapeToEye, const CurvePtsData& origin_curve, CurvePtsData& output_curve_proj);
 Vector3d projectPoint(double shapeHeight, double newDepth, double distShapeToEye, Vector3d fromPoint);
-float adjustDiffLight(double textDepth, float maxInt, float ambInt, double Depth_flat, double Depth_deep);
+//float adjustDiffLight(double textDepth, float maxInt, float ambInt, double Depth_flat, double Depth_deep);
+float adjustAmbient(double textDepth, float maxInt, double rateAmbvsDiff_flat, double rateAmbvsDiff_deep, double Depth_flat, double Depth_deep);
 
 bool change_haptic_object(double hapticDepth);
 bool phidget_move_readjust(double setToDistance, int MaxAttempt_good, int MaxAttempt_pass);
