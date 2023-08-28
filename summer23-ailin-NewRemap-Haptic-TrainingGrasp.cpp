@@ -843,7 +843,7 @@ bool phidget_move_readjust(double setToDistance, int MaxAttempt_good, int MaxAtt
 
 // This function seems to be used to shut down the system after use
 void shutdown(){
-	cout << "shutting down" << endl;
+	
 	responseFile.close(); // close this object
 	cleanup();
 	exit(0);
@@ -968,7 +968,7 @@ void initBlock()
 		trialNum_break = 24;
 
 	}else{
-
+		trainNum_cap = 20;
 		repetition = 4;
 		totalTrNum = 8 * repetition;
 		trialNum_break = 16;
@@ -1450,7 +1450,8 @@ void drawInfo()
 			case stimulus_preview:				
 				glColor3fv(glWhite);
 				text.draw("Welcome! press + to start training");
-				text.draw("# Name: " + subjectName);
+
+				text.draw("# Alias: " + subjectName);
 				text.draw("# IOD: " + stringify<double>(interoculardistance));
 				
 				glColor3fv(glRed);
@@ -1472,11 +1473,13 @@ void drawInfo()
 			case trial_grasp:
 			case trial_handReturn:
 			{
-				text.draw("# current phidget read: " + stringify<double>(current_phidget_distance));
+				//text.draw("# current phidget read: " + stringify<double>(current_phidget_distance));
 				text.draw(" ");
 				text.draw("# current stage: " + stringify<int>(current_stage));
 				text.draw("# trial Num: " + stringify<int>(trialNum));
-				text.draw("# depth haptic: " + stringify<double>(depth_haptic));
+				//text.draw("# depth haptic: " + stringify<double>(depth_haptic));
+				//text.draw("# GA: " + stringify<double>(grip_aperture));
+				
 
 				//text.draw("bump ID " + stringify<int>(current_bump));
 
@@ -1572,10 +1575,6 @@ void handleResize(int w, int h)
 
 void drawStimulus()
 {
-	//enum Stages {stimulus_preview, prep_trial, trial_fixate_first, trial_present_first,
-	//trial_fixate_second, trial_present_second, trial_respond, break_time, exp_completed};
-
-	//draw_objEdge();
 
 	if(Fingers_Calibrated){
 		draw_thumb_dots();
@@ -1638,7 +1637,7 @@ void initTrial()
 		depth_text = depth_mean;
 	}
 	else {
-		depth_mean = trial.getCurrent()["meanDepth"] + (rand() % 3 - 1.0);
+		depth_mean = trial.getCurrent()["meanDepth"];
 
 		if(session_full_vs_extra){
 			depth_delta = trial.getCurrent()["DepthDelta"];
@@ -1650,6 +1649,7 @@ void initTrial()
 			depth_disp = depth_mean;
 		}
 
+		//cout << "trN: " << trialNum << "    depth: T" << depth_text << " D" << depth_disp << endl;
 	}
 
 	if (reinforce_texture_disparity) {
@@ -1911,11 +1911,13 @@ void handleKeypress(unsigned char key, int x, int y)
 					break;
 
 				case visual_error:
+					beepOk(25);
 					Tex_dot_density = Tex_dot_density - 0.01;
 					initTrial();
 					break;
 
 				case phidget_error:
+					beepOk(25);
 					liinAct_reset++;
 					if(liinAct_reset % 2 == 1)
 						current_phidget_distance = phidgets_linear_move_custom(init_phidget_distance, distance_speed_cutoff, distance_buffer_inc, distance_buffer_dec);
@@ -1926,11 +1928,13 @@ void handleKeypress(unsigned char key, int x, int y)
 					break;
 
 				case blocked_objMarkers:
+					beepOk(25);
 					initTrial();
 					break;
 
 				case velmex_error:
-					moveObject(Vector3d(0, -10, 0), 6200);
+					beepOk(25);
+					//moveObject(Vector3d(0, -20, 0), 6200);					
 					initTrial();
 					break;
 
@@ -2138,6 +2142,11 @@ void beepOk(int tone)
 	PlaySound((LPCSTR) "C:\\cncsvision\\data\\beep\\spoken-help.wav",
 		NULL, SND_FILENAME | SND_ASYNC);
 	break;
+
+	case 25: // trying
+		PlaySound((LPCSTR)"C:\\cncsvision\\data\\beep\\spoken-initiating.wav",
+			NULL, SND_FILENAME | SND_ASYNC);
+		break;
 	}
 	return;
 }
@@ -2415,7 +2424,7 @@ void online_fingers()
 		gripSmall = (grip_aperture < thresholdGA_small);
 		gripSteady = (abs(vel_grip_change) < thresholdVelGA_steady);
 	
-		handOnObject = (dist_thm_target < thresholdDist_on_target);
+		handOnObject = (dist_thm_target < thresholdDist_on_target) && (grip_aperture > (depth_haptic - 2));
 
 	}
 

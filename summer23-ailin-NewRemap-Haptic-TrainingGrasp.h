@@ -205,7 +205,7 @@ int totalTrNum = 4 * 6 * repetition;
 int trialNum = 0;
 double percentComplete = 0;
 int trialNum_break = 20;
-int trainNum_cap = 20;
+int trainNum_cap = 8;
 
 
 
@@ -324,7 +324,7 @@ double R_intersect_factor = 2 / (1 + drop_off_rate);
 
 /********** LIGHT SHADING ***************/
 float max_intensity = 1.0;
-float min_intensity = 0.75;
+float min_intensity = 0.7;
 float light_amb = 0.3;
 float light_dif = 0.5;
 float lightDir_z = 0.5;
